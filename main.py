@@ -1,6 +1,8 @@
 import strawberry
 from strawberry.asgi import GraphQL
 from fastapi import FastAPI,Request
+import zoneinfo
+zoneinfo.ZoneInfo('Asia/Tokyo')
 
 @strawberry.type
 class User:
