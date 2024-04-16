@@ -1,32 +1,39 @@
 import os
 import sys
-import strawberry
-from strawberry.asgi import GraphQL
-from fastapi import FastAPI,Request
-import zoneinfo
-zoneinfo.ZoneInfo('Asia/Tokyo')
-
 # 現在のスクリプトのディレクトリを取得
 current_dir = os.path.dirname(__file__)
 
 # プロジェクトルートのパスを取得
-project_root = os.path.abspath(os.path.join(current_dir, '..'))
+project_root = os.path.abspath(os.path.join(current_dir, '.'))
 
 # プロジェクトルートをPythonパスに追加
 sys.path.append(project_root)
 print(project_root)
 
 
+import strawberry
+from strawberry.asgi import GraphQL
+from fastapi import FastAPI,Request
+from sqlalchemy.orm import Session
+import zoneinfo
+zoneinfo.ZoneInfo('Asia/Tokyo')
+from database import SessionLocal
+from models.category import Category as CategoryModel
+
 @strawberry.type
-class User:
-    name: str
-    age: int
+class Category:
+    id: int
+    categoryName: str
 
 @strawberry.type
 class Query:
     @strawberry.field
-    def user(self) -> User:
-        return User(name="Shota", age=22)
+    def categories(self) -> list[Category]:
+        db: Session = SessionLocal() 
+        data = db.query(CategoryModel).all()
+            
+        return [Category(id=cat.id, categoryName=cat.category_name) for cat in data]
+    
 schema = strawberry.Schema(query=Query)
 graphql_app = GraphQL(schema)
 
