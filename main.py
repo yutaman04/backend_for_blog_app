@@ -19,11 +19,23 @@ import zoneinfo
 zoneinfo.ZoneInfo('Asia/Tokyo')
 from database import SessionLocal
 from models.category import Category as CategoryModel
+from models.article import Article as ArticleModel
 
 @strawberry.type
 class Category:
     id: int
     categoryName: str
+    
+@strawberry.type
+class Ariticle:
+    id: int
+    categoryId: int
+    title: str
+    content: str
+    isActive: bool
+    createUserId: int
+    createdAt: str
+    updatedAt: str
 
 @strawberry.type
 class Query:
@@ -33,6 +45,22 @@ class Query:
         data = db.query(CategoryModel).all()
             
         return [Category(id=cat.id, categoryName=cat.category_name) for cat in data]
+    @strawberry.field
+    def articles(self) -> list[Ariticle]:
+        db: Session = SessionLocal()
+        data = db.query(ArticleModel).all()
+        print(data[0].title)
+        return [Ariticle(
+                        id=article.id,
+                        categoryId=article.category_id,
+                        title=article.title,
+                        content=article.content,
+                        isActive=article.is_active,
+                        createUserId=article.create_user_id,
+                        createdAt=article.created_at,
+                        updatedAt=article.updated_at
+                    ) for article in data]
+    
     
 schema = strawberry.Schema(query=Query)
 graphql_app = GraphQL(schema)
