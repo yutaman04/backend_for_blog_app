@@ -35,7 +35,7 @@ def seed():
     ]
     
     try:
-        print("開始:articles")
+        print("開始:article_image")
         for article_image in sample_image_list:
             tmp_article_image = ArticleImage()
             tmp_article_image.article_id = article_image["artile_id"]
@@ -45,8 +45,8 @@ def seed():
             db.add(tmp_article_image)
             
         db.commit()
-        print("完了:articles")
+        print("完了:article_image")
     except Exception as e:
-        print("失敗:articles")
+        print("失敗:article_image")
         print(e)
         db.rollback()
