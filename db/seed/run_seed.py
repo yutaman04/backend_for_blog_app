@@ -13,7 +13,7 @@ print(project_root)
 import database
 from models.category import Category
 import hashlib
-from db.seed.seeders import categories, users, articles
+from db.seed.seeders import categories, users, articles, article_image
 
 
 
@@ -24,6 +24,7 @@ def seed():
     categories.seed()
     users.seed()
     articles.seed()
+    article_image.seed()
     print("完了")
         
 if __name__ == '__main__':
