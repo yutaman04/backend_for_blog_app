@@ -10,7 +10,6 @@ project_root = os.path.abspath(os.path.join(current_dir, './../../'))
 
 # プロジェクトルートをPythonパスに追加
 sys.path.append(project_root)
-print(project_root)
 
 
 from sqlalchemy import Null
@@ -25,6 +24,7 @@ from models.category import Category as CategoryModel
 from models.article import Article as ArticleModel
 from models.user import User as UserModel
 from models.article_image import ArticleImage as ArticleImageModel
+from api.service.article_service import ArticleService
 
 @strawberry.type
 class Category:
@@ -62,6 +62,7 @@ class Article:
 
 @strawberry.type
 class Query:
+    
     # カテゴリー一覧取得
     @strawberry.field
     def categories(self) -> list[Category]:
@@ -72,90 +73,18 @@ class Query:
 
     # 記事一覧取得
     @strawberry.field
-    def articles(self, limit: int, offset: int) -> list[Article]:
-        db: Session = SessionLocal()
-        data = db.query(ArticleModel, UserModel)\
-                .join(UserModel, UserModel.id == ArticleModel.create_user_id)\
-                .limit(limit).offset(offset)
-        # data = db.query(ArticleModel, UserModel)\
-        #         .join(UserModel, UserModel.id == ArticleModel.create_user_id)\
-        #         .all()
+    def articles(self, limit: int = None, offset: int = None) -> list[Article]:
+        if limit is None or offset is None:
+            raise ValueError("limit and offset is required for fetching an articles")
         
-        return_obj: list[Article] = []
-        
-        if data:           
-            for article in data:
-                # 記事の画像を取得
-                images = db.query(ArticleImageModel, UserModel)\
-                         .join(UserModel, UserModel.id == ArticleImageModel.create_user_id)\
-                         .where(ArticleImageModel.article_id == article.Article.id)\
-                         .all()
-                if images:
-                    # 画像がある場合はリストを生成して設定する
-                    tmp_article = Article(
-                        id=article.Article.id,
-                        categoryId=article.Article.category_id,
-                        title=article.Article.title,
-                        content=article.Article.content,
-                        isActive=article.Article.is_active,
-                        createUserId=article.Article.create_user_id,
-                        createUserName=article.User.user_name,
-                        createUserDisplayName=article.User.display_name,
-                        createdAt=article.Article.created_at,
-                        updatedAt=article.Article.updated_at,
-                        articleImages=[ArticleImage(
-                                        id=ai.ArticleImage.id,
-                                        articleId=ai.ArticleImage.article_id,
-                                        imageName=ai.ArticleImage.image_name,
-                                        sortOrder=ai.ArticleImage.sort_order,
-                                        isActive=ai.ArticleImage.is_active,
-                                        createUserId=ai.ArticleImage.create_user_id,
-                                        createUserName=ai.User.user_name,
-                                        createUserDisplayName=ai.User.display_name,
-                                        createdAt=ai.ArticleImage.created_at,
-                                        updatedAt=ai.ArticleImage.updated_at,
-                                    ) for ai in images]
-                    )
-                    return_obj.append(tmp_article)
-                else:
-                    # 画像が無い場合は空の配列を設定
-                    tmp_article = Article(
-                        id=article.Article.id,
-                        categoryId=article.Article.category_id,
-                        title=article.Article.title,
-                        content=article.Article.content,
-                        isActive=article.Article.is_active,
-                        createUserId=article.Article.create_user_id,
-                        createUserName=article.User.user_name,
-                        createUserDisplayName=article.User.display_name,
-                        createdAt=article.Article.created_at,
-                        updatedAt=article.Article.updated_at,
-                        articleImages=[]
-                    )
-                    return_obj.append(tmp_article)
-                    
-            return return_obj     
-        else:
-            raise Exception("Articles not found")
+        article_service = ArticleService()
+        return article_service.articles(limit, offset)
 
     # 記事取得
     @strawberry.field
-    def article(self, id: strawberry.ID) -> Article:
-        db: Session = SessionLocal()
-        article = db.query(ArticleModel, UserModel).join(UserModel, UserModel.id == ArticleModel.create_user_id).filter(ArticleModel.id == id).first()
+    def article(self, id: strawberry.ID = None) -> Article:
+        if id is None:
+            raise ValueError("ID is required for fetching an article")
         
-        if article:
-            return Article(
-                    id=article.Article.id,
-                    categoryId=article.Article.category_id,
-                    title=article.Article.title,
-                    content=article.Article.content,
-                    isActive=article.Article.is_active,
-                    createUserId=article.Article.create_user_id,
-                    createUserName=article.User.user_name,
-                    createUserDisplayName=article.User.display_name,
-                    createdAt=article.Article.created_at,
-                    updatedAt=article.Article.updated_at
-                )
-        else:
-            raise Exception("Article not found")
+        article_service = ArticleService()
+        return article_service.article(id)
