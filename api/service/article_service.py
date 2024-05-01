@@ -7,6 +7,7 @@ from database import SessionLocal
 from models.article import Article as ArticleModel
 from models.user import User as UserModel
 from models.article_image import ArticleImage as ArticleImageModel
+from models.category import Category as CategoryModel
 
 @strawberry.type
 class ArticleImage:
@@ -25,6 +26,7 @@ class ArticleImage:
 class Article:
     id: strawberry.ID
     categoryId: int
+    categoryName: str
     title: str
     content: str
     isActive: bool
@@ -39,8 +41,9 @@ class ArticleService:
     # 記事一覧取得
     def articles(self, limit: int, offset: int) -> list[Article]:
         db: Session = SessionLocal()
-        data = db.query(ArticleModel, UserModel)\
+        data = db.query(ArticleModel, UserModel, CategoryModel)\
                 .join(UserModel, UserModel.id == ArticleModel.create_user_id)\
+                .join(CategoryModel, CategoryModel.id == ArticleModel.category_id)\
                 .limit(limit).offset(offset)
         
         return_obj: list[Article] = []
@@ -57,6 +60,7 @@ class ArticleService:
                     tmp_article = Article(
                         id=article.Article.id,
                         categoryId=article.Article.category_id,
+                        categoryName=article.Category.category_name,
                         title=article.Article.title,
                         content=article.Article.content,
                         isActive=article.Article.is_active,
@@ -84,6 +88,7 @@ class ArticleService:
                     tmp_article = Article(
                         id=article.Article.id,
                         categoryId=article.Article.category_id,
+                        categoryName=article.Category.category_name,
                         title=article.Article.title,
                         content=article.Article.content,
                         isActive=article.Article.is_active,
@@ -102,8 +107,9 @@ class ArticleService:
     # 特定の記事取得
     def article(self, id: strawberry.ID):
         db: Session = SessionLocal()
-        article = db.query(ArticleModel, UserModel)\
+        article = db.query(ArticleModel, UserModel, CategoryModel)\
                     .join(UserModel, UserModel.id == ArticleModel.create_user_id)\
+                    .join(CategoryModel, CategoryModel.id == ArticleModel.category_id)\
                     .filter(ArticleModel.id == id)\
                     .first()
         
@@ -118,6 +124,7 @@ class ArticleService:
                 return Article(
                     id=article.Article.id,
                     categoryId=article.Article.category_id,
+                    categoryName=article.Category.category_name,
                     title=article.Article.title,
                     content=article.Article.content,
                     isActive=article.Article.is_active,
@@ -143,6 +150,7 @@ class ArticleService:
                 return Article(
                         id=article.Article.id,
                         categoryId=article.Article.category_id,
+                        categoryName=article.Category.category_name,
                         title=article.Article.title,
                         content=article.Article.content,
                         isActive=article.Article.is_active,
