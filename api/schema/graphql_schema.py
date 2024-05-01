@@ -50,6 +50,7 @@ class ArticleImage:
 class Article:
     id: strawberry.ID
     categoryId: int
+    categoryName: str
     title: str
     content: str
     isActive: bool
