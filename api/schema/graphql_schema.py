@@ -59,6 +59,7 @@ class Article:
     createUserDisplayName: str
     createdAt: str
     updatedAt: str
+    totalCount: int
     articleImages: Optional[list[ArticleImage]]
 
 @strawberry.type

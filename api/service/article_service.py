@@ -35,16 +35,20 @@ class Article:
     createUserDisplayName: str
     createdAt: str
     updatedAt: str
+    totalCount: int
     articleImages: Optional[list[ArticleImage]]
 
 class ArticleService:
     # 記事一覧取得
     def articles(self, limit: int, offset: int) -> list[Article]:
         db: Session = SessionLocal()
+        dataCount = db.query(ArticleModel).where(ArticleModel.is_active == True).count()
         data = db.query(ArticleModel, UserModel, CategoryModel)\
                 .join(UserModel, UserModel.id == ArticleModel.create_user_id)\
                 .join(CategoryModel, CategoryModel.id == ArticleModel.category_id)\
+                .where(ArticleModel.is_active == True)\
                 .limit(limit).offset(offset)
+        
         
         return_obj: list[Article] = []
         
@@ -69,6 +73,7 @@ class ArticleService:
                         createUserDisplayName=article.User.display_name,
                         createdAt=article.Article.created_at,
                         updatedAt=article.Article.updated_at,
+                        totalCount=dataCount,
                         articleImages=[ArticleImage(
                             id=ai.ArticleImage.id,
                             articleId=ai.ArticleImage.article_id,
@@ -97,6 +102,7 @@ class ArticleService:
                         createUserDisplayName=article.User.display_name,
                         createdAt=article.Article.created_at,
                         updatedAt=article.Article.updated_at,
+                        totalCount=dataCount,
                         articleImages=[]
                     )
                     return_obj.append(tmp_article)       
@@ -110,6 +116,7 @@ class ArticleService:
         article = db.query(ArticleModel, UserModel, CategoryModel)\
                     .join(UserModel, UserModel.id == ArticleModel.create_user_id)\
                     .join(CategoryModel, CategoryModel.id == ArticleModel.category_id)\
+                    .where(ArticleModel.is_active == True)\
                     .filter(ArticleModel.id == id)\
                     .first()
         
@@ -133,6 +140,7 @@ class ArticleService:
                     createUserDisplayName=article.User.display_name,
                     createdAt=article.Article.created_at,
                     updatedAt=article.Article.updated_at,
+                    totalCount=None,
                     articleImages=[ArticleImage(
                             id=ai.ArticleImage.id,
                             articleId=ai.ArticleImage.article_id,
@@ -159,6 +167,7 @@ class ArticleService:
                         createUserDisplayName=article.User.display_name,
                         createdAt=article.Article.created_at,
                         updatedAt=article.Article.updated_at,
+                        totalCount=None,
                         articleImages=[]
                     )
         else:
