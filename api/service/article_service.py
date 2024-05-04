@@ -48,7 +48,7 @@ class ArticleService:
                 .join(CategoryModel, CategoryModel.id == ArticleModel.category_id)\
                 .where(ArticleModel.is_active == True)\
                 .limit(limit).offset(offset)
-        
+        db.close()
         
         return_obj: list[Article] = []
         
@@ -59,6 +59,7 @@ class ArticleService:
                          .join(UserModel, UserModel.id == ArticleImageModel.create_user_id)\
                          .where(ArticleImageModel.article_id == article.Article.id)\
                          .all()
+                db.close()
                 if images:
                     # 画像がある場合はリストを生成して設定する
                     tmp_article = Article(
@@ -120,13 +121,14 @@ class ArticleService:
                     .filter(ArticleModel.id == id)\
                     .first()
         
-        
+        db.close()
         if article:
             # 記事の画像を取得
             images = db.query(ArticleImageModel, UserModel)\
                         .join(UserModel, UserModel.id == ArticleImageModel.create_user_id)\
                         .where(ArticleImageModel.article_id == article.Article.id)\
                         .all()
+            db.close()
             if images:
                 return Article(
                     id=article.Article.id,
