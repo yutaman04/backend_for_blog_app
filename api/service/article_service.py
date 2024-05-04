@@ -35,16 +35,20 @@ class Article:
     createUserDisplayName: str
     createdAt: str
     updatedAt: str
+    totalCount: int
     articleImages: Optional[list[ArticleImage]]
 
 class ArticleService:
     # 記事一覧取得
     def articles(self, limit: int, offset: int) -> list[Article]:
         db: Session = SessionLocal()
+        dataCount = db.query(ArticleModel).where(ArticleModel.is_active == True).count()
         data = db.query(ArticleModel, UserModel, CategoryModel)\
                 .join(UserModel, UserModel.id == ArticleModel.create_user_id)\
                 .join(CategoryModel, CategoryModel.id == ArticleModel.category_id)\
+                .where(ArticleModel.is_active == True)\
                 .limit(limit).offset(offset)
+        db.close()
         
         return_obj: list[Article] = []
         
@@ -55,6 +59,7 @@ class ArticleService:
                          .join(UserModel, UserModel.id == ArticleImageModel.create_user_id)\
                          .where(ArticleImageModel.article_id == article.Article.id)\
                          .all()
+                db.close()
                 if images:
                     # 画像がある場合はリストを生成して設定する
                     tmp_article = Article(
@@ -69,6 +74,7 @@ class ArticleService:
                         createUserDisplayName=article.User.display_name,
                         createdAt=article.Article.created_at,
                         updatedAt=article.Article.updated_at,
+                        totalCount=dataCount,
                         articleImages=[ArticleImage(
                             id=ai.ArticleImage.id,
                             articleId=ai.ArticleImage.article_id,
@@ -97,6 +103,7 @@ class ArticleService:
                         createUserDisplayName=article.User.display_name,
                         createdAt=article.Article.created_at,
                         updatedAt=article.Article.updated_at,
+                        totalCount=dataCount,
                         articleImages=[]
                     )
                     return_obj.append(tmp_article)       
@@ -110,16 +117,18 @@ class ArticleService:
         article = db.query(ArticleModel, UserModel, CategoryModel)\
                     .join(UserModel, UserModel.id == ArticleModel.create_user_id)\
                     .join(CategoryModel, CategoryModel.id == ArticleModel.category_id)\
+                    .where(ArticleModel.is_active == True)\
                     .filter(ArticleModel.id == id)\
                     .first()
         
-        
+        db.close()
         if article:
             # 記事の画像を取得
             images = db.query(ArticleImageModel, UserModel)\
                         .join(UserModel, UserModel.id == ArticleImageModel.create_user_id)\
                         .where(ArticleImageModel.article_id == article.Article.id)\
                         .all()
+            db.close()
             if images:
                 return Article(
                     id=article.Article.id,
@@ -133,6 +142,7 @@ class ArticleService:
                     createUserDisplayName=article.User.display_name,
                     createdAt=article.Article.created_at,
                     updatedAt=article.Article.updated_at,
+                    totalCount=None,
                     articleImages=[ArticleImage(
                             id=ai.ArticleImage.id,
                             articleId=ai.ArticleImage.article_id,
@@ -159,6 +169,7 @@ class ArticleService:
                         createUserDisplayName=article.User.display_name,
                         createdAt=article.Article.created_at,
                         updatedAt=article.Article.updated_at,
+                        totalCount=None,
                         articleImages=[]
                     )
         else:
