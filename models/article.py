@@ -15,3 +15,4 @@ class Article(Base):
     created_at = Column(DateTime, default = func.now(), nullable=True)
     updated_at = Column(DateTime, default = func.now(), onupdate=func.now(), nullable=True)
     deleted_at = Column(DateTime, nullable=True)
+    

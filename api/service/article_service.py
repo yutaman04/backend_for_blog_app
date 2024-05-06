@@ -3,40 +3,12 @@ import strawberry
 from sqlalchemy.orm import Session
 import zoneinfo
 zoneinfo.ZoneInfo('Asia/Tokyo')
+from api.schema.graphql_schema import Article, ArticleImage
 from database import SessionLocal
 from models.article import Article as ArticleModel
 from models.user import User as UserModel
 from models.article_image import ArticleImage as ArticleImageModel
 from models.category import Category as CategoryModel
-
-@strawberry.type
-class ArticleImage:
-    id: strawberry.ID
-    articleId: int
-    imageName: str
-    sortOrder: int
-    isActive: bool
-    createUserId: int
-    createUserName: str
-    createUserDisplayName: str
-    createdAt: str
-    updatedAt: str
-    
-@strawberry.type
-class Article:
-    id: strawberry.ID
-    categoryId: int
-    categoryName: str
-    title: str
-    content: str
-    isActive: bool
-    createUserId: int
-    createUserName: str
-    createUserDisplayName: str
-    createdAt: str
-    updatedAt: str
-    totalCount: int
-    articleImages: Optional[list[ArticleImage]]
 
 class ArticleService:
     # 記事一覧取得
@@ -174,3 +146,4 @@ class ArticleService:
                     )
         else:
             raise Exception("Article not found")
+        
