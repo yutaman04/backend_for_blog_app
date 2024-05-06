@@ -39,4 +39,10 @@ class Category:
 class AuthResult:
     msg: str
     jwt: str
+
+@strawberry.type
+class AuthVerificationResult:
+    msg: str
+
+
     
