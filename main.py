@@ -5,10 +5,13 @@ import sys
 from fastapi import Request, Response, status
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
-from api.schema.graphql_schema import Query
+from api.schema.graphql_mutation import Mutation
+from api.schema.graphql_query import Query
 from api.service.article_image import ArticleImageService
 from models.article_image import ArticleImage
+from api.service.auth_service import AuthService
 # 現在のスクリプトのディレクトリを取得
 current_dir = os.path.dirname(__file__)
 
@@ -28,7 +31,7 @@ from sqlalchemy.orm import Session
 import zoneinfo
 zoneinfo.ZoneInfo('Asia/Tokyo')
     
-schema = strawberry.Schema(query=Query)
+schema = strawberry.Schema(query=Query, mutation=Mutation)
 graphql_app = GraphQL(schema)
 
 app = FastAPI()
