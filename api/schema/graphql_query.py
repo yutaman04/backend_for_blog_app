@@ -1,8 +1,9 @@
-from api.schema.graphql_schema import Article, Category
+from api.schema.graphql_schema import AdminArticleSummary, Article, Category
 import strawberry
 from sqlalchemy.orm import Session
 import zoneinfo
 zoneinfo.ZoneInfo('Asia/Tokyo')
+from api.service.admin_service import AdminService
 from database import SessionLocal
 from models.category import Category as CategoryModel
 from api.service.article_service import ArticleService
@@ -35,4 +36,13 @@ class Query:
         
         article_service = ArticleService()
         return article_service.article(id)
+    
+    # 管理サマリー取得
+    @strawberry.field
+    def admin_summary(self, jwt: str) -> AdminArticleSummary:
+        if jwt is None:
+            raise ValueError("jwt is required for fetching an admin_summary")
+        
+        admin_service = AdminService(jwt)
+        return admin_service.admin_summary()
         
