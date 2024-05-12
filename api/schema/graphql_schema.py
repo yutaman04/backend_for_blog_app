@@ -44,5 +44,12 @@ class AuthResult:
 class AuthVerificationResult:
     msg: str
 
+@strawberry.type
+class AdminArticleSummary:
+    totalArticleCount: int
+    disabledArticleCount: int
+    activeArticleCount: int
+    recentPostsArticle: list[Article]
+
 
     
