@@ -5,8 +5,8 @@ from models.article import Article as ArticleModel
 from models.user import User as UserModel
 from models.category import Category as CategoryModel
 from sqlalchemy.orm import Session
-
-
+from models.article_image import ArticleImage as ArticleImageModel
+from api.schema.graphql_schema import Article, ArticleImage
 
 from api.service.auth_service import AuthService
 
@@ -38,26 +38,68 @@ class AdminService(AuthService):
                 .limit(3)
         db.close()
         
+        
+        tmp_article_list: list[Article] = []
         if data:
+            for article in data:
+                # 記事の画像を取得
+                image = db.query(ArticleImageModel, UserModel)\
+                         .join(UserModel, UserModel.id == ArticleImageModel.create_user_id)\
+                         .where(ArticleImageModel.article_id == article.Article.id)\
+                         .first()                      
+                db.close()
+                
+                if image:
+                    tmp_article = Article(
+                            id=article.Article.id,
+                            categoryId=article.Article.category_id,
+                            categoryName=article.Category.category_name,
+                            title=article.Article.title,
+                            content=article.Article.content,
+                            isActive=article.Article.is_active,
+                            createUserId=article.Article.create_user_id,
+                            createUserName=article.User.user_name,
+                            createUserDisplayName=article.User.display_name,
+                            createdAt=article.Article.created_at,
+                            updatedAt=article.Article.updated_at,
+                            totalCount=totalCount,
+                            articleImages=[ArticleImage(
+                                id=image.ArticleImage.id,
+                                articleId=image.ArticleImage.article_id,
+                                imageName=image.ArticleImage.image_name,
+                                sortOrder=image.ArticleImage.sort_order,
+                                isActive=image.ArticleImage.is_active,
+                                createUserId=image.ArticleImage.create_user_id,
+                                createUserName=image.User.user_name,
+                                createUserDisplayName=image.User.display_name,
+                                createdAt=image.ArticleImage.created_at,
+                                updatedAt=image.ArticleImage.updated_at,
+                            )]
+                        )
+                    tmp_article_list.append(tmp_article)
+                else:
+                    tmp_article = Article(
+                            id=article.Article.id,
+                            categoryId=article.Article.category_id,
+                            categoryName=article.Category.category_name,
+                            title=article.Article.title,
+                            content=article.Article.content,
+                            isActive=article.Article.is_active,
+                            createUserId=article.Article.create_user_id,
+                            createUserName=article.User.user_name,
+                            createUserDisplayName=article.User.display_name,
+                            createdAt=article.Article.created_at,
+                            updatedAt=article.Article.updated_at,
+                            totalCount=totalCount,
+                            articleImages=None
+                        )
+                    tmp_article_list.append(tmp_article)
+                
             return AdminArticleSummary(
                 totalArticleCount = totalCount,
                 disabledArticleCount = disabledArticleCount,
                 activeArticleCount = activeArticleCount,
-                recentPostsArticle = [Article(
-                        id=article.Article.id,
-                        categoryId=article.Article.category_id,
-                        categoryName=article.Category.category_name,
-                        title=article.Article.title,
-                        content=article.Article.content,
-                        isActive=article.Article.is_active,
-                        createUserId=article.Article.create_user_id,
-                        createUserName=article.User.user_name,
-                        createUserDisplayName=article.User.display_name,
-                        createdAt=article.Article.created_at,
-                        updatedAt=article.Article.updated_at,
-                        totalCount=totalCount,
-                        articleImages=None
-                    ) for article in data ]
+                recentPostsArticle = tmp_article_list
             )
         else:
             return AdminArticleSummary(
