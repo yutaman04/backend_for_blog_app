@@ -1,4 +1,7 @@
+import os
+import time
 from typing import Optional
+from fastapi import File
 import strawberry
 from sqlalchemy.orm import Session
 import zoneinfo
@@ -9,6 +12,9 @@ from models.article import Article as ArticleModel
 from models.user import User as UserModel
 from models.article_image import ArticleImage as ArticleImageModel
 from models.category import Category as CategoryModel
+from strawberry.file_uploads import Upload
+import aiofiles
+
 
 class ArticleService:
     # 記事一覧取得
@@ -146,4 +152,20 @@ class ArticleService:
                     )
         else:
             raise Exception("Article not found")
+    
+    # アップロードファイルを公開ディレクトリに保存する
+    async def article_image_upload(self, file: Upload):
+        # 保存先パスの生成
+        image_base_path = "./images"
+        image_extension = os.path.splitext(file[0].filename)
+        # ファイル名は現在日時のミリ秒を基に生成
+        file_name = "image_" + str(time.time()).replace('.', "") + image_extension[1]
+        file_path = os.path.join(image_base_path, file_name)
+        
+        async with aiofiles.open(file_path, 'wb') as out_file:
+            content = await file[0].read()
+            await out_file.write(content)
+        
+        return "/api" + file_path[1:]
+        
         

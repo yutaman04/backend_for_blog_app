@@ -51,5 +51,8 @@ class AdminArticleSummary:
     activeArticleCount: int
     recentPostsArticle: list[Article]
 
-
+@strawberry.type
+class AdminArticleUpload:
+    status: str
+    filePath: str
     
