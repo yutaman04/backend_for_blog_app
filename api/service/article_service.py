@@ -167,5 +167,23 @@ class ArticleService:
             await out_file.write(content)
         
         return "/api" + file_path[1:]
-        
-        
+    
+    # 記事作成を行う
+    def create_article(self, user_id: int, article_title: str, article_body: str, category_id: int, article_images: list[str] ):
+        db: Session = SessionLocal()
+        try:
+            new_article = ArticleModel(
+                category_id = category_id,
+                title = article_title,
+                content = article_body,
+                create_user_id = user_id
+            )
+            db.add(new_article)
+            db.commit()
+            db.refresh(new_article)
+            return new_article.id
+        except:
+            db.rollback()
+            raise 
+        finally:
+            db.close()

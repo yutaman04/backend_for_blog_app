@@ -55,4 +55,14 @@ class AdminArticleSummary:
 class AdminArticleUpload:
     status: str
     filePath: str
+
+@strawberry.type
+class CreateAritcle:
+    status: str
+    article_id: strawberry.ID
+
+@strawberry.type
+class JwtUserInfo:
+    userId: int
+    userName: str
     
