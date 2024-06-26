@@ -181,9 +181,31 @@ class ArticleService:
             db.add(new_article)
             db.commit()
             db.refresh(new_article)
+            
+            for image_path in  article_images:
+                result = self.regist_article_image(user_id, new_article.id, image_path)
+            
             return new_article.id
         except:
             db.rollback()
             raise 
+        finally:
+            db.close()
+    
+    # 記事画像情報を記事画像テーブルに追加
+    def regist_article_image(self, user_id: int, article_id: int, article_image_path: str):
+        db: Session = SessionLocal()
+        try:
+            new_article_image = ArticleImageModel(
+                article_id = article_id,
+                image_name = article_image_path,
+                create_user_id = user_id
+            )
+            db.add(new_article_image)
+            db.commit()
+            return True
+        except:
+            db.rollback()
+            raise
         finally:
             db.close()
