@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 import jwt
 
 from api.service.user_service import UserService
-from api.schema.graphql_schema import AuthResult, AuthVerificationResult
+from api.schema.graphql_schema import AuthResult, AuthVerificationResult, JwtUserInfo
 
 class AuthService:
     load_dotenv()
@@ -20,9 +20,9 @@ class AuthService:
     
     
     # JWTの生成
-    def create_jwt_token(self, user_name: str):
+    def create_jwt_token(self, user_name: str, user_id: int):
         jwt_expiration = self.calc_jwt_expiration()
-        encoded = jwt.encode({"user_name": user_name, "jwt_expiration": jwt_expiration}, os.environ['JWT_SECRET_KEY'], algorithm="HS256")
+        encoded = jwt.encode({"user_id": user_id, "user_name": user_name, "jwt_expiration": jwt_expiration}, os.environ['JWT_SECRET_KEY'], algorithm="HS256")
         return encoded
     
     # パスワード検証
@@ -55,7 +55,7 @@ class AuthService:
         
         # パスワードOKならJWTを設定して返す
         if verification_result:
-            jwt = self.create_jwt_token(user_name)
+            jwt = self.create_jwt_token(user_name, user_data.id)
             return_data.jwt = jwt
             return return_data
         else:
@@ -81,5 +81,22 @@ class AuthService:
         finally:
             return ret
     
-    
+    # JWTトークンからユーザー情報を取得する
+    def show_jwt_user_info(self, target_jwt: str):
+        ret = JwtUserInfo(userId=None, userName=None)
+        jwt_verit = self.jwt_verification(target_jwt)
+        if jwt_verit.msg == self.SUCCESS:
+            try:
+                decode_result: dict[str, Any] = jwt.decode(
+                    jwt=target_jwt,
+                    key=os.environ['JWT_SECRET_KEY'],
+                    algorithms=["HS256"]
+                )
+                ret.userId = decode_result['user_id']
+                ret.userName = decode_result['user_name']
+            except Exception as e:
+                raise Exception('jwt userInfo error')
+            finally:
+                return ret
+            
         
