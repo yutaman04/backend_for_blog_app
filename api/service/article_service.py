@@ -167,5 +167,47 @@ class ArticleService:
             await out_file.write(content)
         
         return "/api" + file_path[1:]
-        
-        
+    
+    # 記事作成を行う
+    def create_article(self, user_id: int, article_title: str, article_body: str, category_id: int, article_images: list[str] ):
+        db: Session = SessionLocal()
+        try:
+            new_article = ArticleModel(
+                category_id = category_id,
+                title = article_title,
+                content = article_body,
+                create_user_id = user_id
+            )
+            db.add(new_article)
+            db.commit()
+            db.refresh(new_article)
+            
+            for index, image_path in  enumerate(article_images):
+                result = self.regist_article_image(user_id, new_article.id, image_path, index + 1)
+            
+            return new_article.id
+        except:
+            db.rollback()
+            raise 
+        finally:
+            db.close()
+    
+    # 記事画像情報を記事画像テーブルに追加
+    def regist_article_image(self, user_id: int, article_id: int, article_image_path: str, sort_order: int):
+        db: Session = SessionLocal()
+        try:
+            new_article_image = ArticleImageModel(
+                article_id = article_id,
+                image_name = article_image_path,
+                create_user_id = user_id,
+                is_active = True,
+                sort_order = sort_order
+            )
+            db.add(new_article_image)
+            db.commit()
+            return True
+        except:
+            db.rollback()
+            raise
+        finally:
+            db.close()
