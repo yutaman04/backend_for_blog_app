@@ -25,17 +25,17 @@ print(project_root)
 
 from sqlalchemy import Null
 import strawberry
-from strawberry.asgi import GraphQL
+from strawberry.fastapi import GraphQLRouter
 from fastapi import FastAPI, File,Request, UploadFile
 from sqlalchemy.orm import Session
 import zoneinfo
 zoneinfo.ZoneInfo('Asia/Tokyo')
-    
+
 schema = strawberry.Schema(query=Query, mutation=Mutation)
-graphql_app = GraphQL(schema)
+graphql_app = GraphQLRouter(schema, multipart_uploads_enabled=True)
 
 app = FastAPI()
-app.add_route("/api/graphql", graphql_app)
+app.include_router(graphql_app, prefix="/api/graphql")
 # 画像用のディレクトリを静的ファイルとして公開する
 app.mount("/api/images", StaticFiles(directory="images"), name="images")
 
