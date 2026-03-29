@@ -62,6 +62,11 @@ class CreateAritcle:
     article_id: strawberry.ID
 
 @strawberry.type
+class EditArticle:
+    status: str
+    article_id: strawberry.ID
+
+@strawberry.type
 class JwtUserInfo:
     userId: int
     userName: str

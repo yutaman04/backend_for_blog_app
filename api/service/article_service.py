@@ -5,7 +5,8 @@ from fastapi import File
 import strawberry
 from sqlalchemy.orm import Session
 import zoneinfo
-zoneinfo.ZoneInfo('Asia/Tokyo')
+
+zoneinfo.ZoneInfo("Asia/Tokyo")
 from api.schema.graphql_schema import Article, ArticleImage
 from database import SessionLocal
 from models.article import Article as ArticleModel
@@ -21,22 +22,27 @@ class ArticleService:
     def articles(self, limit: int, offset: int) -> list[Article]:
         db: Session = SessionLocal()
         dataCount = db.query(ArticleModel).where(ArticleModel.is_active == True).count()
-        data = db.query(ArticleModel, UserModel, CategoryModel)\
-                .join(UserModel, UserModel.id == ArticleModel.create_user_id)\
-                .join(CategoryModel, CategoryModel.id == ArticleModel.category_id)\
-                .where(ArticleModel.is_active == True)\
-                .limit(limit).offset(offset)
+        data = (
+            db.query(ArticleModel, UserModel, CategoryModel)
+            .join(UserModel, UserModel.id == ArticleModel.create_user_id)
+            .join(CategoryModel, CategoryModel.id == ArticleModel.category_id)
+            .where(ArticleModel.is_active == True)
+            .limit(limit)
+            .offset(offset)
+        )
         db.close()
-        
+
         return_obj: list[Article] = []
-        
-        if data:           
+
+        if data:
             for article in data:
                 # 記事の画像を取得
-                images = db.query(ArticleImageModel, UserModel)\
-                         .join(UserModel, UserModel.id == ArticleImageModel.create_user_id)\
-                         .where(ArticleImageModel.article_id == article.Article.id)\
-                         .all()
+                images = (
+                    db.query(ArticleImageModel, UserModel)
+                    .join(UserModel, UserModel.id == ArticleImageModel.create_user_id)
+                    .where(ArticleImageModel.article_id == article.Article.id)
+                    .all()
+                )
                 db.close()
                 if images:
                     # 画像がある場合はリストを生成して設定する
@@ -53,18 +59,21 @@ class ArticleService:
                         createdAt=article.Article.created_at,
                         updatedAt=article.Article.updated_at,
                         totalCount=dataCount,
-                        articleImages=[ArticleImage(
-                            id=ai.ArticleImage.id,
-                            articleId=ai.ArticleImage.article_id,
-                            imageName=ai.ArticleImage.image_name,
-                            sortOrder=ai.ArticleImage.sort_order,
-                            isActive=ai.ArticleImage.is_active,
-                            createUserId=ai.ArticleImage.create_user_id,
-                            createUserName=ai.User.user_name,
-                            createUserDisplayName=ai.User.display_name,
-                            createdAt=ai.ArticleImage.created_at,
-                            updatedAt=ai.ArticleImage.updated_at,
-                        ) for ai in images]
+                        articleImages=[
+                            ArticleImage(
+                                id=ai.ArticleImage.id,
+                                articleId=ai.ArticleImage.article_id,
+                                imageName=ai.ArticleImage.image_name,
+                                sortOrder=ai.ArticleImage.sort_order,
+                                isActive=ai.ArticleImage.is_active,
+                                createUserId=ai.ArticleImage.create_user_id,
+                                createUserName=ai.User.user_name,
+                                createUserDisplayName=ai.User.display_name,
+                                createdAt=ai.ArticleImage.created_at,
+                                updatedAt=ai.ArticleImage.updated_at,
+                            )
+                            for ai in images
+                        ],
                     )
                     return_obj.append(tmp_article)
                 else:
@@ -82,30 +91,34 @@ class ArticleService:
                         createdAt=article.Article.created_at,
                         updatedAt=article.Article.updated_at,
                         totalCount=dataCount,
-                        articleImages=[]
+                        articleImages=[],
                     )
-                    return_obj.append(tmp_article)       
+                    return_obj.append(tmp_article)
             return return_obj
         else:
             raise Exception("Articles not found")
-    
+
     # 特定の記事取得
     def article(self, id: strawberry.ID):
         db: Session = SessionLocal()
-        article = db.query(ArticleModel, UserModel, CategoryModel)\
-                    .join(UserModel, UserModel.id == ArticleModel.create_user_id)\
-                    .join(CategoryModel, CategoryModel.id == ArticleModel.category_id)\
-                    .where(ArticleModel.is_active == True)\
-                    .filter(ArticleModel.id == id)\
-                    .first()
-        
+        article = (
+            db.query(ArticleModel, UserModel, CategoryModel)
+            .join(UserModel, UserModel.id == ArticleModel.create_user_id)
+            .join(CategoryModel, CategoryModel.id == ArticleModel.category_id)
+            .where(ArticleModel.is_active == True)
+            .filter(ArticleModel.id == id)
+            .first()
+        )
+
         db.close()
         if article:
             # 記事の画像を取得
-            images = db.query(ArticleImageModel, UserModel)\
-                        .join(UserModel, UserModel.id == ArticleImageModel.create_user_id)\
-                        .where(ArticleImageModel.article_id == article.Article.id)\
-                        .all()
+            images = (
+                db.query(ArticleImageModel, UserModel)
+                .join(UserModel, UserModel.id == ArticleImageModel.create_user_id)
+                .where(ArticleImageModel.article_id == article.Article.id)
+                .all()
+            )
             db.close()
             if images:
                 return Article(
@@ -121,7 +134,8 @@ class ArticleService:
                     createdAt=article.Article.created_at,
                     updatedAt=article.Article.updated_at,
                     totalCount=None,
-                    articleImages=[ArticleImage(
+                    articleImages=[
+                        ArticleImage(
                             id=ai.ArticleImage.id,
                             articleId=ai.ArticleImage.article_id,
                             imageName=ai.ArticleImage.image_name,
@@ -132,76 +146,124 @@ class ArticleService:
                             createUserDisplayName=ai.User.display_name,
                             createdAt=ai.ArticleImage.created_at,
                             updatedAt=ai.ArticleImage.updated_at,
-                        ) for ai in images]
-                    )
+                        )
+                        for ai in images
+                    ],
+                )
             else:
                 return Article(
-                        id=article.Article.id,
-                        categoryId=article.Article.category_id,
-                        categoryName=article.Category.category_name,
-                        title=article.Article.title,
-                        content=article.Article.content,
-                        isActive=article.Article.is_active,
-                        createUserId=article.Article.create_user_id,
-                        createUserName=article.User.user_name,
-                        createUserDisplayName=article.User.display_name,
-                        createdAt=article.Article.created_at,
-                        updatedAt=article.Article.updated_at,
-                        totalCount=None,
-                        articleImages=[]
-                    )
+                    id=article.Article.id,
+                    categoryId=article.Article.category_id,
+                    categoryName=article.Category.category_name,
+                    title=article.Article.title,
+                    content=article.Article.content,
+                    isActive=article.Article.is_active,
+                    createUserId=article.Article.create_user_id,
+                    createUserName=article.User.user_name,
+                    createUserDisplayName=article.User.display_name,
+                    createdAt=article.Article.created_at,
+                    updatedAt=article.Article.updated_at,
+                    totalCount=None,
+                    articleImages=[],
+                )
         else:
             raise Exception("Article not found")
-    
+
     # アップロードファイルを公開ディレクトリに保存する
     async def article_image_upload(self, file: Upload):
         # 保存先パスの生成
         image_base_path = "./images"
         image_extension = os.path.splitext(file[0].filename)
         # ファイル名は現在日時のミリ秒を基に生成
-        file_name = "image_" + str(time.time()).replace('.', "") + image_extension[1]
+        file_name = "image_" + str(time.time()).replace(".", "") + image_extension[1]
         file_path = os.path.join(image_base_path, file_name)
-        
-        async with aiofiles.open(file_path, 'wb') as out_file:
+
+        async with aiofiles.open(file_path, "wb") as out_file:
             content = await file[0].read()
             await out_file.write(content)
-        
+
         return "/api" + file_path[1:]
-    
+
     # 記事作成を行う
-    def create_article(self, user_id: int, article_title: str, article_body: str, category_id: int, article_images: list[str] ):
+    def create_article(
+        self,
+        user_id: int,
+        article_title: str,
+        article_body: str,
+        category_id: int,
+        article_images: list[str],
+    ):
         db: Session = SessionLocal()
         try:
             new_article = ArticleModel(
-                category_id = category_id,
-                title = article_title,
-                content = article_body,
-                create_user_id = user_id
+                category_id=category_id,
+                title=article_title,
+                content=article_body,
+                create_user_id=user_id,
             )
             db.add(new_article)
             db.commit()
             db.refresh(new_article)
-            
-            for index, image_path in  enumerate(article_images):
-                result = self.regist_article_image(user_id, new_article.id, image_path, index + 1)
-            
+
+            for index, image_path in enumerate(article_images):
+                result = self.regist_article_image(
+                    user_id, new_article.id, image_path, index + 1
+                )
+
             return new_article.id
         except:
             db.rollback()
-            raise 
+            raise
         finally:
             db.close()
-    
+
+    # 記事編集を行う
+    def update_article(
+        self,
+        article_id: int,
+        article_title: str,
+        article_body: str,
+        category_id: int,
+        article_images: list[str],
+    ):
+        db: Session = SessionLocal()
+        try:
+            article = db.query(ArticleModel).filter(ArticleModel.id == article_id).first()
+            if article is None:
+                raise Exception("Article not found")
+
+            article.category_id = category_id
+            article.title = article_title
+            article.content = article_body
+            db.commit()
+            db.refresh(article)
+
+            # 既存の画像を削除して再登録
+            db.query(ArticleImageModel).filter(ArticleImageModel.article_id == article_id).delete()
+            db.commit()
+
+            for index, image_path in enumerate(article_images):
+                self.regist_article_image(article.create_user_id, article_id, image_path, index + 1)
+
+            return article_id
+        except:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
     # 記事画像情報を記事画像テーブルに追加
-    def regist_article_image(self, user_id: int, article_id: int, article_image_path: str, sort_order: int):
+    def regist_article_image(
+        self, user_id: int, article_id: int, article_image_path: str, sort_order: int
+    ):
         db: Session = SessionLocal()
         try:
             new_article_image = ArticleImageModel(
-                article_id = article_id,
-                image_name = article_image_path,
-                create_user_id = user_id,
-                is_active = True,
-                sort_order = sort_order
+                article_id=article_id,
+                image_name=article_image_path,
+                create_user_id=user_id,
+                is_active=True,
+                sort_order=sort_order,
             )
             db.add(new_article_image)
             db.commit()

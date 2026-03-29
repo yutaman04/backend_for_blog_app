@@ -1,7 +1,7 @@
 from fastapi import File
 from api.service.article_service import ArticleService
 from api.service.auth_service import AuthService
-from api.schema.graphql_schema import AdminArticleUpload, AuthResult, AuthVerificationResult, CreateAritcle
+from api.schema.graphql_schema import AdminArticleUpload, AuthResult, AuthVerificationResult, CreateAritcle, EditArticle
 import strawberry
 import zoneinfo
 zoneinfo.ZoneInfo('Asia/Tokyo')
@@ -58,4 +58,19 @@ class Mutation:
             return CreateAritcle(status="200", article_id=create_article_id)
         else:
             raise Exception("Faled to create article")
-        
+
+    @strawberry.mutation
+    def edit_article(self, jwt: str, article_id: int, article_title: str, article_body: str, category_id: int, article_images: list[str]) -> EditArticle:
+        # 認証
+        if jwt is None:
+            raise ValueError("jwt is required for edit article")
+        auth_service = AuthService()
+        auth_reuslt = auth_service.jwt_verification(jwt)
+        if auth_reuslt.msg != 'success':
+            return EditArticle(status="auth_error", article_id=article_id)
+
+        article_service = ArticleService()
+        updated_article_id = article_service.update_article(article_id, article_title, article_body, category_id, article_images)
+
+        return EditArticle(status="200", article_id=updated_article_id)
+
