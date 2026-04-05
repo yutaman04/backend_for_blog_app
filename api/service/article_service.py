@@ -263,6 +263,24 @@ class ArticleService:
         finally:
             db.close()
 
+    # 記事のis_activeを更新する
+    def update_article_is_active(self, article_id: int, is_active: bool):
+        db: Session = SessionLocal()
+        try:
+            article = db.query(ArticleModel).filter(ArticleModel.id == article_id).first()
+            if article is None:
+                raise Exception("Article not found")
+
+            article.is_active = is_active
+            db.commit()
+
+            return article_id
+        except:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
     # 記事削除を行う（論理削除）
     def delete_article(self, article_id: int):
         db: Session = SessionLocal()

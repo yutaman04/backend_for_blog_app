@@ -8,6 +8,7 @@ from api.schema.graphql_schema import (
     CreateAritcle,
     EditArticle,
     DeleteArticle,
+    UpdateArticleIsActive,
 )
 import strawberry
 import zoneinfo
@@ -119,3 +120,18 @@ class Mutation:
         deleted_article_id = article_service.delete_article(article_id)
 
         return DeleteArticle(status="200", article_id=deleted_article_id)
+
+    @strawberry.mutation
+    def update_article_is_active(self, jwt: str, article_id: int, is_active: bool) -> UpdateArticleIsActive:
+        # 認証
+        if jwt is None:
+            raise ValueError("jwt is required for update article is_active")
+        auth_service = AuthService()
+        auth_reuslt = auth_service.jwt_verification(jwt)
+        if auth_reuslt.msg != "success":
+            return UpdateArticleIsActive(status="auth_error", article_id=article_id)
+
+        article_service = ArticleService()
+        updated_article_id = article_service.update_article_is_active(article_id, is_active)
+
+        return UpdateArticleIsActive(status="200", article_id=updated_article_id)

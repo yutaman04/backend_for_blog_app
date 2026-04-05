@@ -83,6 +83,12 @@ class DeleteArticle:
 
 
 @strawberry.type
+class UpdateArticleIsActive:
+    status: str
+    article_id: strawberry.ID
+
+
+@strawberry.type
 class JwtUserInfo:
     userId: int
     userName: str
