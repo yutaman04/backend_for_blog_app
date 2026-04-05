@@ -5,6 +5,7 @@ from fastapi import File
 import strawberry
 from sqlalchemy.orm import Session
 import zoneinfo
+import datetime
 
 zoneinfo.ZoneInfo("Asia/Tokyo")
 from api.schema.graphql_schema import Article, ArticleImage
@@ -21,12 +22,16 @@ class ArticleService:
     # 記事一覧取得
     def articles(self, limit: int, offset: int) -> list[Article]:
         db: Session = SessionLocal()
-        dataCount = db.query(ArticleModel).where(ArticleModel.is_active == True).count()
+        dataCount = (
+            db.query(ArticleModel)
+            .where(ArticleModel.is_active == True, ArticleModel.deleted_at == None)
+            .count()
+        )
         data = (
             db.query(ArticleModel, UserModel, CategoryModel)
             .join(UserModel, UserModel.id == ArticleModel.create_user_id)
             .join(CategoryModel, CategoryModel.id == ArticleModel.category_id)
-            .where(ArticleModel.is_active == True)
+            .where(ArticleModel.is_active == True, ArticleModel.deleted_at == None)
             .limit(limit)
             .offset(offset)
         )
@@ -105,7 +110,7 @@ class ArticleService:
             db.query(ArticleModel, UserModel, CategoryModel)
             .join(UserModel, UserModel.id == ArticleModel.create_user_id)
             .join(CategoryModel, CategoryModel.id == ArticleModel.category_id)
-            .where(ArticleModel.is_active == True)
+            .where(ArticleModel.is_active == True, ArticleModel.deleted_at == None)
             .filter(ArticleModel.id == id)
             .first()
         )
@@ -228,7 +233,9 @@ class ArticleService:
     ):
         db: Session = SessionLocal()
         try:
-            article = db.query(ArticleModel).filter(ArticleModel.id == article_id).first()
+            article = (
+                db.query(ArticleModel).filter(ArticleModel.id == article_id).first()
+            )
             if article is None:
                 raise Exception("Article not found")
 
@@ -239,11 +246,54 @@ class ArticleService:
             db.refresh(article)
 
             # 既存の画像を削除して再登録
-            db.query(ArticleImageModel).filter(ArticleImageModel.article_id == article_id).delete()
+            db.query(ArticleImageModel).filter(
+                ArticleImageModel.article_id == article_id
+            ).delete()
             db.commit()
 
             for index, image_path in enumerate(article_images):
-                self.regist_article_image(article.create_user_id, article_id, image_path, index + 1)
+                self.regist_article_image(
+                    article.create_user_id, article_id, image_path, index + 1
+                )
+
+            return article_id
+        except:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    # 記事のis_activeを更新する
+    def update_article_is_active(self, article_id: int, is_active: bool):
+        db: Session = SessionLocal()
+        try:
+            article = db.query(ArticleModel).filter(ArticleModel.id == article_id).first()
+            if article is None:
+                raise Exception("Article not found")
+
+            article.is_active = is_active
+            db.commit()
+
+            return article_id
+        except:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    # 記事削除を行う（論理削除）
+    def delete_article(self, article_id: int):
+        db: Session = SessionLocal()
+        try:
+            article = (
+                db.query(ArticleModel).filter(ArticleModel.id == article_id).first()
+            )
+            if article is None:
+                raise Exception("Article not found")
+
+            article.is_active = False
+            article.deleted_at = datetime.datetime.now()
+            db.commit()
 
             return article_id
         except:
