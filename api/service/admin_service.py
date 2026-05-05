@@ -7,6 +7,7 @@ from models.category import Category as CategoryModel
 from sqlalchemy.orm import Session
 from models.article_image import ArticleImage as ArticleImageModel
 from api.schema.graphql_schema import Article, ArticleImage
+from enums.article_type import ArticleTypeEnum
 
 from api.service.auth_service import AuthService
 
@@ -56,6 +57,7 @@ class AdminService(AuthService):
                             categoryName=article.Category.category_name,
                             title=article.Article.title,
                             content=article.Article.content,
+                            articleType=ArticleTypeEnum(article.Article.article_type),
                             isActive=article.Article.is_active,
                             createUserId=article.Article.create_user_id,
                             createUserName=article.User.user_name,
@@ -84,6 +86,7 @@ class AdminService(AuthService):
                             categoryName=article.Category.category_name,
                             title=article.Article.title,
                             content=article.Article.content,
+                            articleType=ArticleTypeEnum(article.Article.article_type),
                             isActive=article.Article.is_active,
                             createUserId=article.Article.create_user_id,
                             createUserName=article.User.user_name,

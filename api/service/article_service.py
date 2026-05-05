@@ -9,6 +9,7 @@ import datetime
 
 zoneinfo.ZoneInfo("Asia/Tokyo")
 from api.schema.graphql_schema import Article, ArticleImage
+from enums.article_type import ArticleTypeEnum
 from database import SessionLocal
 from models.article import Article as ArticleModel
 from models.user import User as UserModel
@@ -57,6 +58,7 @@ class ArticleService:
                         categoryName=article.Category.category_name,
                         title=article.Article.title,
                         content=article.Article.content,
+                        articleType=ArticleTypeEnum(article.Article.article_type),
                         isActive=article.Article.is_active,
                         createUserId=article.Article.create_user_id,
                         createUserName=article.User.user_name,
@@ -89,6 +91,7 @@ class ArticleService:
                         categoryName=article.Category.category_name,
                         title=article.Article.title,
                         content=article.Article.content,
+                        articleType=ArticleTypeEnum(article.Article.article_type),
                         isActive=article.Article.is_active,
                         createUserId=article.Article.create_user_id,
                         createUserName=article.User.user_name,
@@ -132,6 +135,7 @@ class ArticleService:
                     categoryName=article.Category.category_name,
                     title=article.Article.title,
                     content=article.Article.content,
+                    articleType=ArticleTypeEnum(article.Article.article_type),
                     isActive=article.Article.is_active,
                     createUserId=article.Article.create_user_id,
                     createUserName=article.User.user_name,
@@ -162,6 +166,7 @@ class ArticleService:
                     categoryName=article.Category.category_name,
                     title=article.Article.title,
                     content=article.Article.content,
+                    articleType=ArticleTypeEnum(article.Article.article_type),
                     isActive=article.Article.is_active,
                     createUserId=article.Article.create_user_id,
                     createUserName=article.User.user_name,
@@ -204,6 +209,7 @@ class ArticleService:
                 category_id=category_id,
                 title=article_title,
                 content=article_body,
+                article_type=ArticleTypeEnum.NORMAL.value,
                 create_user_id=user_id,
             )
             db.add(new_article)
