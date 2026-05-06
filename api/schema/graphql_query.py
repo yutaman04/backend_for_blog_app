@@ -7,6 +7,8 @@ from api.service.admin_service import AdminService
 from database import SessionLocal
 from models.category import Category as CategoryModel
 from api.service.article_service import ArticleService
+from enums.article_type import ArticleTypeEnum
+from typing import Optional
 
 
 @strawberry.type
@@ -21,12 +23,12 @@ class Query:
 
     # 記事一覧取得
     @strawberry.field
-    def articles(self, limit: int = None, offset: int = None) -> list[Article]:
+    def articles(self, limit: int = None, offset: int = None, article_type: Optional[ArticleTypeEnum] = None) -> list[Article]:
         if limit is None or offset is None:
             raise ValueError("limit and offset is required for fetching an articles")
-        
+
         article_service = ArticleService()
-        return article_service.articles(limit, offset)
+        return article_service.articles(limit, offset, article_type)
 
     # 記事取得
     @strawberry.field

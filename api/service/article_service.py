@@ -21,18 +21,19 @@ import aiofiles
 
 class ArticleService:
     # 記事一覧取得
-    def articles(self, limit: int, offset: int) -> list[Article]:
+    def articles(self, limit: int, offset: int, article_type: Optional[ArticleTypeEnum] = None) -> list[Article]:
+        resolved_type = article_type if article_type is not None else ArticleTypeEnum.NORMAL
         db: Session = SessionLocal()
         dataCount = (
             db.query(ArticleModel)
-            .where(ArticleModel.is_active == True, ArticleModel.deleted_at == None)
+            .where(ArticleModel.is_active == True, ArticleModel.deleted_at == None, ArticleModel.article_type == resolved_type.value)
             .count()
         )
         data = (
             db.query(ArticleModel, UserModel, CategoryModel)
             .join(UserModel, UserModel.id == ArticleModel.create_user_id)
             .join(CategoryModel, CategoryModel.id == ArticleModel.category_id)
-            .where(ArticleModel.is_active == True, ArticleModel.deleted_at == None)
+            .where(ArticleModel.is_active == True, ArticleModel.deleted_at == None, ArticleModel.article_type == resolved_type.value)
             .limit(limit)
             .offset(offset)
         )
