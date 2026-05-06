@@ -39,6 +39,7 @@ class Article:
 class Category:
     id: strawberry.ID
     categoryName: str
+    articleType: ArticleTypeEnum
 
 
 @strawberry.type
@@ -68,6 +69,12 @@ class AdminArticleUpload:
 
 @strawberry.type
 class CreateAritcle:
+    status: str
+    article_id: strawberry.ID
+
+
+@strawberry.type
+class CreateFixedArticle:
     status: str
     article_id: strawberry.ID
 

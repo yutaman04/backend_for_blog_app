@@ -15,11 +15,14 @@ from typing import Optional
 class Query:
     # カテゴリー一覧取得
     @strawberry.field
-    def categories(self) -> list[Category]:
-        db: Session = SessionLocal() 
-        data = db.query(CategoryModel).all()
-        db.close()    
-        return [Category(id=cat.id, categoryName=cat.category_name) for cat in data]
+    def categories(self, article_type: Optional[ArticleTypeEnum] = None) -> list[Category]:
+        db: Session = SessionLocal()
+        query = db.query(CategoryModel)
+        if article_type is not None:
+            query = query.filter(CategoryModel.article_type == article_type.value)
+        data = query.all()
+        db.close()
+        return [Category(id=cat.id, categoryName=cat.category_name, articleType=ArticleTypeEnum(cat.article_type)) for cat in data]
 
     # 記事一覧取得
     @strawberry.field

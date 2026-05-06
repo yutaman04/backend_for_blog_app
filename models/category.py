@@ -9,6 +9,7 @@ class Category(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     category_name = Column(String(255), nullable=False)
+    article_type = Column(Integer, nullable=False, default=1)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default = func.now(), nullable=True)
     updated_at = Column(DateTime, default = func.now(), onupdate=func.now(), nullable=True)

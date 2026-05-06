@@ -15,6 +15,8 @@ from models.article import Article as ArticleModel
 from models.user import User as UserModel
 from models.article_image import ArticleImage as ArticleImageModel
 from models.category import Category as CategoryModel
+from models.fixed_article_info import FixedArticleInfo as FixedArticleInfoModel
+from sqlalchemy import func
 from strawberry.file_uploads import Upload
 import aiofiles
 
@@ -303,6 +305,46 @@ class ArticleService:
             db.commit()
 
             return article_id
+        except:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    # 固定記事作成を行う
+    def create_fixed_article(
+        self,
+        user_id: int,
+        article_title: str,
+        article_body: str,
+        category_id: int,
+        article_images: list[str],
+    ):
+        db: Session = SessionLocal()
+        try:
+            new_article = ArticleModel(
+                category_id=category_id,
+                title=article_title,
+                content=article_body,
+                article_type=ArticleTypeEnum.FIXED.value,
+                create_user_id=user_id,
+            )
+            db.add(new_article)
+            db.commit()
+            db.refresh(new_article)
+
+            max_order = db.query(func.max(FixedArticleInfoModel.order)).scalar() or 0
+            new_fixed_info = FixedArticleInfoModel(
+                article_id=new_article.id,
+                order=max_order + 1,
+            )
+            db.add(new_fixed_info)
+            db.commit()
+
+            for index, image_path in enumerate(article_images):
+                self.regist_article_image(user_id, new_article.id, image_path, index + 1)
+
+            return new_article.id
         except:
             db.rollback()
             raise
