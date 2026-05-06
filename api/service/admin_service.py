@@ -21,20 +21,26 @@ class AdminService(AuthService):
     # 管理サマリー取得
     def admin_summary(self):
         db: Session = SessionLocal()
-        totalCount = db.query(ArticleModel).where(ArticleModel.deleted_at == None).count()
+        totalCount = db.query(ArticleModel)\
+                       .where(ArticleModel.deleted_at == None)\
+                       .where(ArticleModel.article_type == ArticleTypeEnum.NORMAL.value)\
+                       .count()
         disabledArticleCount = db.query(ArticleModel)\
                                  .where(ArticleModel.deleted_at == None)\
                                  .where(ArticleModel.is_active == False)\
+                                 .where(ArticleModel.article_type == ArticleTypeEnum.NORMAL.value)\
                                  .count()
         activeArticleCount = db.query(ArticleModel)\
                                  .where(ArticleModel.deleted_at == None)\
                                  .where(ArticleModel.is_active == True)\
+                                 .where(ArticleModel.article_type == ArticleTypeEnum.NORMAL.value)\
                                  .count()
         data = db.query(ArticleModel, UserModel, CategoryModel)\
                 .join(UserModel, UserModel.id == ArticleModel.create_user_id)\
                 .join(CategoryModel, CategoryModel.id == ArticleModel.category_id)\
                 .where(ArticleModel.is_active == True)\
                 .where(ArticleModel.deleted_at == None)\
+                .where(ArticleModel.article_type == ArticleTypeEnum.NORMAL.value)\
                 .order_by(desc(ArticleModel.created_at))\
                 .limit(3)
         db.close()
