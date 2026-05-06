@@ -7,6 +7,7 @@ from models.category import Category as CategoryModel
 from sqlalchemy.orm import Session
 from models.article_image import ArticleImage as ArticleImageModel
 from api.schema.graphql_schema import Article, ArticleImage
+from enums.article_type import ArticleTypeEnum
 
 from api.service.auth_service import AuthService
 
@@ -20,20 +21,26 @@ class AdminService(AuthService):
     # 管理サマリー取得
     def admin_summary(self):
         db: Session = SessionLocal()
-        totalCount = db.query(ArticleModel).where(ArticleModel.deleted_at == None).count()
+        totalCount = db.query(ArticleModel)\
+                       .where(ArticleModel.deleted_at == None)\
+                       .where(ArticleModel.article_type == ArticleTypeEnum.NORMAL.value)\
+                       .count()
         disabledArticleCount = db.query(ArticleModel)\
                                  .where(ArticleModel.deleted_at == None)\
                                  .where(ArticleModel.is_active == False)\
+                                 .where(ArticleModel.article_type == ArticleTypeEnum.NORMAL.value)\
                                  .count()
         activeArticleCount = db.query(ArticleModel)\
                                  .where(ArticleModel.deleted_at == None)\
                                  .where(ArticleModel.is_active == True)\
+                                 .where(ArticleModel.article_type == ArticleTypeEnum.NORMAL.value)\
                                  .count()
         data = db.query(ArticleModel, UserModel, CategoryModel)\
                 .join(UserModel, UserModel.id == ArticleModel.create_user_id)\
                 .join(CategoryModel, CategoryModel.id == ArticleModel.category_id)\
                 .where(ArticleModel.is_active == True)\
                 .where(ArticleModel.deleted_at == None)\
+                .where(ArticleModel.article_type == ArticleTypeEnum.NORMAL.value)\
                 .order_by(desc(ArticleModel.created_at))\
                 .limit(3)
         db.close()
@@ -56,6 +63,7 @@ class AdminService(AuthService):
                             categoryName=article.Category.category_name,
                             title=article.Article.title,
                             content=article.Article.content,
+                            articleType=ArticleTypeEnum(article.Article.article_type),
                             isActive=article.Article.is_active,
                             createUserId=article.Article.create_user_id,
                             createUserName=article.User.user_name,
@@ -84,6 +92,7 @@ class AdminService(AuthService):
                             categoryName=article.Category.category_name,
                             title=article.Article.title,
                             content=article.Article.content,
+                            articleType=ArticleTypeEnum(article.Article.article_type),
                             isActive=article.Article.is_active,
                             createUserId=article.Article.create_user_id,
                             createUserName=article.User.user_name,

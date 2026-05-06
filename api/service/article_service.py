@@ -9,29 +9,33 @@ import datetime
 
 zoneinfo.ZoneInfo("Asia/Tokyo")
 from api.schema.graphql_schema import Article, ArticleImage
+from enums.article_type import ArticleTypeEnum
 from database import SessionLocal
 from models.article import Article as ArticleModel
 from models.user import User as UserModel
 from models.article_image import ArticleImage as ArticleImageModel
 from models.category import Category as CategoryModel
+from models.fixed_article_info import FixedArticleInfo as FixedArticleInfoModel
+from sqlalchemy import func
 from strawberry.file_uploads import Upload
 import aiofiles
 
 
 class ArticleService:
     # 記事一覧取得
-    def articles(self, limit: int, offset: int) -> list[Article]:
+    def articles(self, limit: int, offset: int, article_type: Optional[ArticleTypeEnum] = None) -> list[Article]:
+        resolved_type = article_type if article_type is not None else ArticleTypeEnum.NORMAL
         db: Session = SessionLocal()
         dataCount = (
             db.query(ArticleModel)
-            .where(ArticleModel.is_active == True, ArticleModel.deleted_at == None)
+            .where(ArticleModel.is_active == True, ArticleModel.deleted_at == None, ArticleModel.article_type == resolved_type.value)
             .count()
         )
         data = (
             db.query(ArticleModel, UserModel, CategoryModel)
             .join(UserModel, UserModel.id == ArticleModel.create_user_id)
             .join(CategoryModel, CategoryModel.id == ArticleModel.category_id)
-            .where(ArticleModel.is_active == True, ArticleModel.deleted_at == None)
+            .where(ArticleModel.is_active == True, ArticleModel.deleted_at == None, ArticleModel.article_type == resolved_type.value)
             .limit(limit)
             .offset(offset)
         )
@@ -57,6 +61,7 @@ class ArticleService:
                         categoryName=article.Category.category_name,
                         title=article.Article.title,
                         content=article.Article.content,
+                        articleType=ArticleTypeEnum(article.Article.article_type),
                         isActive=article.Article.is_active,
                         createUserId=article.Article.create_user_id,
                         createUserName=article.User.user_name,
@@ -89,6 +94,7 @@ class ArticleService:
                         categoryName=article.Category.category_name,
                         title=article.Article.title,
                         content=article.Article.content,
+                        articleType=ArticleTypeEnum(article.Article.article_type),
                         isActive=article.Article.is_active,
                         createUserId=article.Article.create_user_id,
                         createUserName=article.User.user_name,
@@ -132,6 +138,7 @@ class ArticleService:
                     categoryName=article.Category.category_name,
                     title=article.Article.title,
                     content=article.Article.content,
+                    articleType=ArticleTypeEnum(article.Article.article_type),
                     isActive=article.Article.is_active,
                     createUserId=article.Article.create_user_id,
                     createUserName=article.User.user_name,
@@ -162,6 +169,7 @@ class ArticleService:
                     categoryName=article.Category.category_name,
                     title=article.Article.title,
                     content=article.Article.content,
+                    articleType=ArticleTypeEnum(article.Article.article_type),
                     isActive=article.Article.is_active,
                     createUserId=article.Article.create_user_id,
                     createUserName=article.User.user_name,
@@ -204,6 +212,7 @@ class ArticleService:
                 category_id=category_id,
                 title=article_title,
                 content=article_body,
+                article_type=ArticleTypeEnum.NORMAL.value,
                 create_user_id=user_id,
             )
             db.add(new_article)
@@ -296,6 +305,46 @@ class ArticleService:
             db.commit()
 
             return article_id
+        except:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    # 固定記事作成を行う
+    def create_fixed_article(
+        self,
+        user_id: int,
+        article_title: str,
+        article_body: str,
+        category_id: int,
+        article_images: list[str],
+    ):
+        db: Session = SessionLocal()
+        try:
+            new_article = ArticleModel(
+                category_id=category_id,
+                title=article_title,
+                content=article_body,
+                article_type=ArticleTypeEnum.FIXED.value,
+                create_user_id=user_id,
+            )
+            db.add(new_article)
+            db.commit()
+            db.refresh(new_article)
+
+            max_order = db.query(func.max(FixedArticleInfoModel.order)).scalar() or 0
+            new_fixed_info = FixedArticleInfoModel(
+                article_id=new_article.id,
+                order=max_order + 1,
+            )
+            db.add(new_fixed_info)
+            db.commit()
+
+            for index, image_path in enumerate(article_images):
+                self.regist_article_image(user_id, new_article.id, image_path, index + 1)
+
+            return new_article.id
         except:
             db.rollback()
             raise

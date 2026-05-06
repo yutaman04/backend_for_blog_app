@@ -1,5 +1,6 @@
 import strawberry
 from typing import Optional
+from enums.article_type import ArticleTypeEnum
 
 
 @strawberry.type
@@ -23,6 +24,7 @@ class Article:
     categoryName: str
     title: str
     content: str
+    articleType: ArticleTypeEnum
     isActive: bool
     createUserId: int
     createUserName: str
@@ -37,6 +39,7 @@ class Article:
 class Category:
     id: strawberry.ID
     categoryName: str
+    articleType: ArticleTypeEnum
 
 
 @strawberry.type
@@ -66,6 +69,12 @@ class AdminArticleUpload:
 
 @strawberry.type
 class CreateAritcle:
+    status: str
+    article_id: strawberry.ID
+
+
+@strawberry.type
+class CreateFixedArticle:
     status: str
     article_id: strawberry.ID
 

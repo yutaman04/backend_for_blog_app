@@ -7,26 +7,31 @@ from api.service.admin_service import AdminService
 from database import SessionLocal
 from models.category import Category as CategoryModel
 from api.service.article_service import ArticleService
+from enums.article_type import ArticleTypeEnum
+from typing import Optional
 
 
 @strawberry.type
 class Query:
     # カテゴリー一覧取得
     @strawberry.field
-    def categories(self) -> list[Category]:
-        db: Session = SessionLocal() 
-        data = db.query(CategoryModel).all()
-        db.close()    
-        return [Category(id=cat.id, categoryName=cat.category_name) for cat in data]
+    def categories(self, article_type: Optional[ArticleTypeEnum] = None) -> list[Category]:
+        db: Session = SessionLocal()
+        query = db.query(CategoryModel)
+        if article_type is not None:
+            query = query.filter(CategoryModel.article_type == article_type.value)
+        data = query.all()
+        db.close()
+        return [Category(id=cat.id, categoryName=cat.category_name, articleType=ArticleTypeEnum(cat.article_type)) for cat in data]
 
     # 記事一覧取得
     @strawberry.field
-    def articles(self, limit: int = None, offset: int = None) -> list[Article]:
+    def articles(self, limit: int = None, offset: int = None, article_type: Optional[ArticleTypeEnum] = None) -> list[Article]:
         if limit is None or offset is None:
             raise ValueError("limit and offset is required for fetching an articles")
-        
+
         article_service = ArticleService()
-        return article_service.articles(limit, offset)
+        return article_service.articles(limit, offset, article_type)
 
     # 記事取得
     @strawberry.field

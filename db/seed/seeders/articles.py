@@ -54,6 +54,7 @@ def seed():
             tmp_article.category_id = article["category_id"]
             tmp_article.title = article["title"]
             tmp_article.content = article["content"]
+            tmp_article.article_type = 1
             tmp_article.create_user_id = 1
             db.add(tmp_article)
             

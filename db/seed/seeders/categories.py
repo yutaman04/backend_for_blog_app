@@ -19,17 +19,22 @@ import hashlib
 db = database.SessionLocal()
   
 def seed():
-    category_names = [
+    normal_category_names = [
         '雑記',
         'プログラミング',
         'TypeScript',
         'AWS',
         '趣味',
     ]
+    fixed_category_names = [
+        'プロフィール',
+        'お問い合わせ',
+    ]
     try:
         print("開始:categories")
-        categories = [Category(category_name=name) for name in category_names]
-        
+        categories = [Category(category_name=name, article_type=1) for name in normal_category_names]
+        categories += [Category(category_name=name, article_type=2) for name in fixed_category_names]
+
         for category in categories:
             db.add(category)
         db.commit()

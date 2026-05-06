@@ -18,7 +18,7 @@ from sqlalchemy import pool
 
 from alembic import context
 import database
-import models.article, models.category, models.user, models.article_image
+import models.article, models.category, models.user, models.article_image, models.fixed_article_info
 
 
 # this is the Alembic Config object, which provides

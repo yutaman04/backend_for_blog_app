@@ -10,6 +10,7 @@ class Article(Base):
     category_id = Column(Integer, nullable=False)
     title = Column(String(255), nullable=True)
     content = Column(Text(), nullable=False)
+    article_type = Column(Integer, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     create_user_id = Column(Integer, nullable=True)
     created_at = Column(DateTime, default = func.now(), nullable=True)
