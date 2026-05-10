@@ -69,6 +69,28 @@ class CategoryService:
         finally:
             db.close()
 
+    # カテゴリー有効フラグ更新
+    def update_category_is_active(self, category_id: int, is_active: bool) -> int:
+        db: Session = SessionLocal()
+        try:
+            category = (
+                db.query(CategoryModel)
+                .filter(CategoryModel.id == category_id, CategoryModel.deleted_at == None)
+                .first()
+            )
+            if category is None:
+                raise Exception("Category not found")
+
+            category.is_active = is_active
+            db.commit()
+
+            return category_id
+        except:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
     # カテゴリー削除（論理削除）
     def delete_category(self, category_id: int) -> int:
         db: Session = SessionLocal()

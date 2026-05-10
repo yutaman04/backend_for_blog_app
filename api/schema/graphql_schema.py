@@ -114,6 +114,12 @@ class CreateCategory:
 
 
 @strawberry.type
+class UpdateCategoryIsActive:
+    status: str
+    category_id: strawberry.ID
+
+
+@strawberry.type
 class EditCategory:
     status: str
     category_id: strawberry.ID

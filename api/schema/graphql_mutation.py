@@ -13,6 +13,7 @@ from api.schema.graphql_schema import (
     CreateCategory,
     EditCategory,
     DeleteCategory,
+    UpdateCategoryIsActive,
 )
 from api.service.category_service import CategoryService
 from enums.article_type import ArticleTypeEnum
@@ -199,6 +200,20 @@ class Mutation:
         updated_category_id = category_service.update_category(category_id, category_name)
 
         return EditCategory(status="200", category_id=updated_category_id)
+
+    @strawberry.mutation
+    def update_category_is_active(self, jwt: str, category_id: int, is_active: bool) -> UpdateCategoryIsActive:
+        if jwt is None:
+            raise ValueError("jwt is required for update category is_active")
+        auth_service = AuthService()
+        auth_reuslt = auth_service.jwt_verification(jwt)
+        if auth_reuslt.msg != "success":
+            return UpdateCategoryIsActive(status="auth_error", category_id=category_id)
+
+        category_service = CategoryService()
+        updated_category_id = category_service.update_category_is_active(category_id, is_active)
+
+        return UpdateCategoryIsActive(status="200", category_id=updated_category_id)
 
     @strawberry.mutation
     def delete_category(self, jwt: str, category_id: int) -> DeleteCategory:
