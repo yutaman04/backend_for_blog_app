@@ -98,6 +98,34 @@ class UpdateArticleIsActive:
 
 
 @strawberry.type
+class AdminCategory:
+    id: strawberry.ID
+    categoryName: str
+    articleType: ArticleTypeEnum
+    isActive: bool
+    createdAt: str
+    updatedAt: str
+
+
+@strawberry.type
+class CreateCategory:
+    status: str
+    category_id: strawberry.ID
+
+
+@strawberry.type
+class EditCategory:
+    status: str
+    category_id: strawberry.ID
+
+
+@strawberry.type
+class DeleteCategory:
+    status: str
+    category_id: strawberry.ID
+
+
+@strawberry.type
 class JwtUserInfo:
     userId: int
     userName: str

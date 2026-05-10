@@ -10,7 +10,12 @@ from api.schema.graphql_schema import (
     EditArticle,
     DeleteArticle,
     UpdateArticleIsActive,
+    CreateCategory,
+    EditCategory,
+    DeleteCategory,
 )
+from api.service.category_service import CategoryService
+from enums.article_type import ArticleTypeEnum
 import strawberry
 import zoneinfo
 
@@ -166,3 +171,45 @@ class Mutation:
         updated_article_id = article_service.update_article_is_active(article_id, is_active)
 
         return UpdateArticleIsActive(status="200", article_id=updated_article_id)
+
+    @strawberry.mutation
+    def create_category(self, jwt: str, category_name: str, article_type: ArticleTypeEnum) -> CreateCategory:
+        if jwt is None:
+            raise ValueError("jwt is required for create category")
+        auth_service = AuthService()
+        auth_reuslt = auth_service.jwt_verification(jwt)
+        if auth_reuslt.msg != "success":
+            return CreateCategory(status="auth_error", category_id=0)
+
+        category_service = CategoryService()
+        created_category_id = category_service.create_category(category_name, article_type.value)
+
+        return CreateCategory(status="200", category_id=created_category_id)
+
+    @strawberry.mutation
+    def edit_category(self, jwt: str, category_id: int, category_name: str) -> EditCategory:
+        if jwt is None:
+            raise ValueError("jwt is required for edit category")
+        auth_service = AuthService()
+        auth_reuslt = auth_service.jwt_verification(jwt)
+        if auth_reuslt.msg != "success":
+            return EditCategory(status="auth_error", category_id=category_id)
+
+        category_service = CategoryService()
+        updated_category_id = category_service.update_category(category_id, category_name)
+
+        return EditCategory(status="200", category_id=updated_category_id)
+
+    @strawberry.mutation
+    def delete_category(self, jwt: str, category_id: int) -> DeleteCategory:
+        if jwt is None:
+            raise ValueError("jwt is required for delete category")
+        auth_service = AuthService()
+        auth_reuslt = auth_service.jwt_verification(jwt)
+        if auth_reuslt.msg != "success":
+            return DeleteCategory(status="auth_error", category_id=category_id)
+
+        category_service = CategoryService()
+        deleted_category_id = category_service.delete_category(category_id)
+
+        return DeleteCategory(status="200", category_id=deleted_category_id)
